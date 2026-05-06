@@ -1,178 +1,34 @@
-📊 Market Regime Dashboard — Pro Version
+# AInauten Privacy Filter
 
-A real-time macro intelligence system for market regime detection and tactical asset allocation.
+Browser-basierte Datenschutz-App zum Maskieren sensibler Daten vor dem Einfügen in AI-Tools.
 
-🧠 Product Overview
+## Features
 
-The Market Regime Dashboard is a quantitative macro framework that consolidates key economic and financial indicators into a single Regime Score (0–100).
+- **Maskierung sensibler Daten** per Mustererkennung (E-Mail, Telefon, IBAN, Kreditkarte, SSN, IPv4)
+- **Beispiel-Daten** mit einem Klick laden
+- **Export** des maskierten Ergebnisses als JSON oder TXT
+- **Klare Grenzen** transparent dokumentiert
+- **Landingpage im AInauten-Look** (Dark Space Style)
 
-It translates complex macro signals into an actionable market state:
+## Start
 
-Score	Regime	Interpretation
-0–25	Crisis	Systemic risk, capital preservation
-25–45	Bear Market	Defensive positioning
-45–68	Transition	Mixed signals, tactical trading
-68–100	Bull Market	Risk-on environment
-🎯 Core Value Proposition
+Da es sich um eine statische App handelt, genügt es `index.html` im Browser zu öffnen.
 
-The system answers one fundamental question:
+Optional per lokalem Webserver:
 
-👉 “What environment am I trading in?”
+```bash
+python3 -m http.server 8080
+```
 
-Instead of:
+Danach: `http://localhost:8080`
 
-reacting to noise
-relying on single indicators
+## Deployment auf `privacy.ainauten.com`
 
-It provides:
-✔ structured macro context
-✔ cross-asset confirmation
-✔ regime-based decision support
+1. Repository nach `github.com/openai/privacy-filter` pushen.
+2. Auf Vercel/Netlify/Cloudflare Pages als static site deployen.
+3. DNS-CNAME für `privacy.ainauten.com` auf die Deploy-Zieldomain setzen.
+4. HTTPS aktivieren.
 
-⚙️ System Architecture
-Frontend (UI Dashboard)
-    ↓
-Vercel Serverless API (/api/market-regime)
-    ↓
-FRED Economic Data API
-🧩 System Components
-1. Frontend (Dashboard UI)
+## Hinweis
 
-Location:
-
-/public/index.html
-
-Responsibilities:
-
-Visualization of macro indicators
-Regime Score display
-Trend history & momentum tracking
-Signal classification (Bull / Neutral / Bear / Warning)
-Local caching (5 min TTL)
-Error handling
-2. Backend (Data & Logic Engine)
-
-Location:
-
-/api/market-regime.js
-
-Responsibilities:
-
-Data retrieval (FRED API)
-Data transformation (YoY, spreads, momentum)
-Signal classification
-Weighted scoring model
-JSON output for frontend
-📊 Indicator Framework
-
-The model integrates 10 macro + market indicators:
-
-Category	Indicator	Role
-Rates	Yield Curve (10Y–3M)	Recession signal
-Credit	High Yield Spread	Risk premium
-Policy	Fed Funds Rate	Monetary stance
-Labor	Unemployment	Economic health
-Inflation	CPI (YoY)	Policy constraint
-Volatility	VIX	Market stress
-Equity	S&P 500 Trend	Risk appetite
-Bonds	10Y Treasury Yield	Valuation pressure
-FX	USD Index	Global liquidity
-Commodities	Copper	Growth expectations
-🧮 Scoring Model
-
-Each indicator is mapped to a signal:
-
-bull = 10
-neutral = 5
-warning = 2
-bear = 1
-
-Then weighted:
-
-yield_curve = 2.0
-credit = 1.8
-policy/labor = 1.5
-others = 1.0–1.3
-
-Final score:
-
-score = weighted_sum / max_possible
-📈 Output Example
-{
-  "score": 52,
-  "label": "TRANSITION",
-  "summary": "Mixed macro signals, no clear trend dominance."
-}
-🔑 Data Source
-
-Primary source:
-
-👉 Federal Reserve Economic Data (FRED)
-https://fred.stlouisfed.org
-
-Characteristics:
-
-Official US macro data
-High reliability
-Mostly daily/monthly frequency
-🔐 Security Architecture
-No API keys exposed in frontend
-All secrets stored in Vercel environment variables
-Backend-only data access
-🚀 Deployment (Vercel)
-Required Structure
-/api/market-regime.js
-/public/index.html
-Environment Variable
-FRED_API_KEY = your_api_key
-Test Endpoint
-https://your-project.vercel.app/api/market-regime
-⚠️ Limitations
-No intraday macro updates
-일부 indicators lagging (e.g. unemployment, CPI)
-VIX & equity data may be delayed
-US-centric dataset
-📊 Use Cases
-Traders
-Regime-based strategy switching
-Risk exposure calibration
-Portfolio Managers
-Asset allocation overlay
-Macro confirmation layer
-Retail Investors
-Market orientation tool
-Avoid emotional decision making
-🧭 Strategic Interpretation
-Regime	Strategy Bias
-Bull	Growth / momentum
-Transition	Selective / tactical
-Bear	Defensive / hedging
-Crisis	Capital preservation
-🔮 Roadmap (Pro Expansion)
-
-Planned features:
-
-Real-time market data (Yahoo / Polygon)
-Backtesting engine
-Strategy recommendation layer
-Portfolio allocation module
-Alerts (Regime Shift Detection)
-Multi-region macro (EU, China, AU)
-TradingView integration
-Mobile app version
-💡 Product Vision
-
-The dashboard evolves into:
-
-👉 A macro operating system for traders
-
-Bridging:
-
-macro analysis
-systematic trading
-decision automation
-⚖️ Disclaimer
-
-This tool provides analytical insights, not financial advice.
-
-All decisions remain the responsibility of the user.
+Diese MVP-Version arbeitet vollständig im Browser (kein Server-Upload), bietet aber **keine 100%-Garantie**. Vor dem Teilen immer manuell prüfen.
