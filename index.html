@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AInauten Privacy Filter</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="brand">🚀 AInauten</div>
+    <h1>Privacy Filter für AI-Tools</h1>
+    <p>
+      Maskiere sensible Daten direkt im Browser, bevor du Inhalte in ChatGPT, Claude,
+      Gemini oder andere AI-Tools einfügst.
+    </p>
+    <div class="hero-actions">
+      <a href="#app" class="btn primary">Jetzt testen</a>
+      <a href="#grenzen" class="btn ghost">Klare Grenzen</a>
+    </div>
+  </header>
+
+  <main>
+    <section id="app" class="card">
+      <h2>Datenschutz-App</h2>
+      <p>Text einfügen, sensible Felder maskieren, Ergebnis kopieren oder exportieren.</p>
+
+      <div class="toolbar">
+        <button id="loadExample" class="btn small">Beispiel-Daten laden</button>
+        <button id="maskBtn" class="btn small primary">Maskieren</button>
+        <button id="copyBtn" class="btn small">Maskierten Text kopieren</button>
+      </div>
+
+      <div class="grid">
+        <div>
+          <label for="sourceText">Eingabetext</label>
+          <textarea id="sourceText" rows="12" placeholder="Füge hier den Quelltext ein..."></textarea>
+        </div>
+        <div>
+          <label for="maskedText">Maskierter Text</label>
+          <textarea id="maskedText" rows="12" readonly placeholder="Maskiertes Ergebnis erscheint hier..."></textarea>
+        </div>
+      </div>
+
+      <h3>Erkannte Kategorien</h3>
+      <ul id="findings" class="findings"></ul>
+
+      <h3>Export</h3>
+      <div class="toolbar">
+        <button id="exportJson" class="btn small">Export als JSON</button>
+        <button id="exportTxt" class="btn small">Export als TXT</button>
+      </div>
+    </section>
+
+    <section id="grenzen" class="card warning">
+      <h2>Klare Grenzen</h2>
+      <ul>
+        <li>Der Filter ist regex-basiert und erkennt nicht jeden Spezialfall.</li>
+        <li>OCR-Inhalte, Bilder und Screenshots werden nicht automatisch analysiert.</li>
+        <li>Keine 100%-Garantie: Vor dem Teilen immer manuell gegenprüfen.</li>
+        <li>Verarbeitung erfolgt lokal im Browser, ohne Server-Upload in dieser Demo.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Deployment-Hinweis</h2>
+      <p>
+        Für <strong>privacy.ainauten.com</strong> kannst du dieses Projekt als statische Website
+        deployen (z. B. Vercel, Netlify, Cloudflare Pages) und die Domain per CNAME verbinden.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2026 AInauten · Privacy Filter MVP</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
