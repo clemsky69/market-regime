@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/fred.js": { "runtime": "nodejs18.x" }
+  },
+  "routes": [
+    { "src": "/api/fred", "dest": "/api/fred.js" },
+    { "src": "/(.*)",     "dest": "/index.html"  }
+  ]
+}
