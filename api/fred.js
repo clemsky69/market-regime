@@ -17,6 +17,7 @@ const ALLOWED_SERIES = new Set([
   'CPIAUCSL',     // CPI
   'DGS10',        // 10J Treasury
   'INDPRO',       // Industrieproduktion
+  'UMCSENT',      // Univ. of Michigan Consumer Sentiment
 ]);
 
 // ── 2. RATE LIMITER (in-memory, per IP) ──────────────────
