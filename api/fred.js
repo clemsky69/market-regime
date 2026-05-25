@@ -6,9 +6,18 @@ const https = require('https');
 
 // ── SERIES WHITELIST ──────────────────────────────────────
 const ALLOWED_SERIES = new Set([
-  'T10Y3M', 'VIXCLS', 'BAMLH0A0HYM2', 'SP500', 'FEDFUNDS',
-  'DTWEXBGS', 'PCOPPUSDM', 'UNRATE', 'CPIAUCSL', 'DGS10',
-  'INDPRO', 'UMCSENT',
+  'T10Y3M',   // Yield Curve
+  'VIXCLS',   // VIX (© CBOE, Citation Required)
+  'NFCI',     // Chicago Fed National Financial Conditions Index
+  'STLFSI4',  // St. Louis Fed Financial Stress Index
+  'FEDFUNDS', // Fed Funds Rate
+  'DTWEXBGS', // Dollar Index
+  'PCOPPUSDM',// Kupfer
+  'UNRATE',   // Arbeitslosigkeit
+  'CPIAUCSL', // CPI
+  'DGS10',    // 10J Treasury
+  'INDPRO',   // Industrieproduktion
+  'UMCSENT',  // Univ. of Michigan Consumer Sentiment
 ]);
 
 // ── RATE LIMITER (in-memory, per IP) ─────────────────────
