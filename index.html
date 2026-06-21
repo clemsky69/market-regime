@@ -168,6 +168,21 @@ footer{border-top:1px solid var(--border);padding-top:16px;
   max-width:230px;z-index:500;pointer-events:none;opacity:0;transition:opacity .15s;line-height:1.6;}
 .tip.show{opacity:1;}
 
+.dist-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.dist-chip{font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;
+  padding:5px 12px;border-radius:4px;letter-spacing:1px;display:flex;align-items:center;gap:5px;
+  position:relative;overflow:hidden;}
+.dist-chip::before{content:'';position:absolute;inset:0;opacity:.1;background:currentColor;}
+.dist-chip.bull{color:var(--green);border:1px solid rgba(0,229,160,.3);}
+.dist-chip.neutral{color:var(--yellow);border:1px solid rgba(255,194,51,.3);}
+.dist-chip.warning{color:var(--orange);border:1px solid rgba(255,136,51,.3);}
+.dist-chip.bear{color:var(--red);border:1px solid rgba(255,68,102,.3);}
+.dist-chip.error{color:var(--muted);border:1px solid var(--border);}
+.dist-bar{height:3px;border-radius:2px;margin-left:6px;min-width:4px;background:currentColor;opacity:.6;}
+
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr);}
+}
 @media(max-width:700px){
   .grid{grid-template-columns:1fr;}
   .status-row{grid-template-columns:repeat(6,1fr);}
@@ -186,6 +201,7 @@ footer{border-top:1px solid var(--border);padding-top:16px;
   <div class="hd-right">
     <div class="regime-pill trans" id="regimePill">LADEN…</div>
     <span class="last-upd" id="lastUpd"></span>
+    <span class="last-upd" id="countdownEl" style="color:var(--dim)"></span>
     <button class="refresh-btn" onclick="loadAll()">
       <span class="spin" id="spinEl">&#8635;</span> REFRESH
     </button>
@@ -230,6 +246,7 @@ footer{border-top:1px solid var(--border);padding-top:16px;
   <div id="insightText" style="font-size:.76rem;color:var(--muted);line-height:1.6;flex:1;min-width:200px;"></div>
 </div>
 <div class="status-row" id="statusRow"></div>
+<div id="distRow" class="dist-row"></div>
 <div class="grid" id="cardGrid"></div>
 
 <footer>
@@ -290,26 +307,26 @@ function checkDisclaimer() {
 
 var CACHE_TTL  = 60 * 60 * 1000; // 60 Minuten
 // Cache deaktiviert — FRED ToS (2024) verbietet das Speichern/Cachen von FRED-Daten
-var HIST_KEY = 'mrd_score_hist_v5';
-function getCache()  { return null; } // kein Cache
-function setCache()  {} // kein Cache
+var HIST_KEY = 'mrd_score_hist_v6';
+function getCache()  { return null; }
+function setCache()  {}
 
 function smoothScore(raw) {
   var hist = [];
-  try { hist = JSON.parse(sessionStorage.getItem(HIST_KEY)||'[]'); } catch(e){}
+  try { hist = JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){}
   var prev  = hist.length>=1 ? hist[hist.length-1].score : raw;
   var prev2 = hist.length>=2 ? hist[hist.length-2].score : prev;
   return Math.round(0.6*raw + 0.3*prev + 0.1*prev2);
 }
 function pushScoreHist(score, ts) {
   var hist = [];
-  try { hist = JSON.parse(sessionStorage.getItem(HIST_KEY)||'[]'); } catch(e){}
+  try { hist = JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){}
   hist.push({score:score, ts:ts, label:regimeLabel(score).label});
-  if(hist.length>30) hist = hist.slice(-30);
-  try { sessionStorage.setItem(HIST_KEY, JSON.stringify(hist)); } catch(e){}
+  if(hist.length>90) hist = hist.slice(-90);
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(hist)); } catch(e){}
 }
 function getScoreHist() {
-  try { return JSON.parse(sessionStorage.getItem(HIST_KEY)||'[]'); } catch(e){ return []; }
+  try { return JSON.parse(localStorage.getItem(HIST_KEY)||'[]'); } catch(e){ return []; }
 }
 
 // ── WEIGHTS & SIGNAL MAPPING ────────────────────────────
@@ -540,11 +557,12 @@ function fetchOneSeries(indId) {
     var sigFn  = FRED_SIG[indId]  || function(){ return 'neutral'; };
     var noteFn = FRED_NOTE[indId] || function(v){ return '' + v; };
     return {
-      id:   indId,
-      sig:  sigFn(latest, hist),
-      val:  latest,
-      note: noteFn(latest, hist),
-      date: obs[obs.length - 1].date
+      id:        indId,
+      sig:       sigFn(latest, hist),
+      val:       latest,
+      note:      noteFn(latest, hist),
+      date:      obs[obs.length - 1].date,
+      sparkVals: hist.slice(-16)
     };
   });
 }
@@ -572,19 +590,29 @@ function fetchAllFred() {
 
 // ── (Claude-API-Modus entfernt — immer FRED Live-Daten) ──
 
-// ── SPARKLINE (generated from single value — visualised as trend bar) ──
-function sparkline(sig, val, dec) {
-  // For single-value data we generate an illustrative trend bar
+// ── SPARKLINE ────────────────────────────────────────────
+function sparkline(sig, val, dec, sparkVals) {
   var col = sig==='bull'?'var(--green)':sig==='bear'?'var(--red)':sig==='warning'?'var(--orange)':'var(--yellow)';
-  // 12 bars with slight random variation around value for visual interest
   var bars = '';
-  var seed = val || 50;
-  for(var i=0; i<12; i++) {
-    var noise = (Math.sin(seed*i*0.7+i)*0.5+0.5);
-    var last  = i===11;
-    var h = Math.max(12, Math.min(95, 30 + noise*55 + (last?15:0)));
-    var op = 0.2 + (i/11)*0.8;
-    bars += '<div class="sb" style="height:'+h.toFixed(0)+'%;background:'+col+';opacity:'+op+(last?';outline:1px solid '+col:'')+'"></div>';
+  if (sparkVals && sparkVals.length >= 3) {
+    var sv = sparkVals.slice(-16);
+    var mn = Math.min.apply(null, sv), mx = Math.max.apply(null, sv);
+    var range = mx - mn || 1;
+    for (var i = 0; i < sv.length; i++) {
+      var h = Math.max(8, Math.min(95, ((sv[i] - mn) / range) * 80 + 10));
+      var last = i === sv.length - 1;
+      var op = 0.22 + (i / (sv.length - 1)) * 0.78;
+      bars += '<div class="sb" style="height:'+h.toFixed(0)+'%;background:'+col+';opacity:'+op.toFixed(2)+(last?';outline:1px solid '+col:'')+'"></div>';
+    }
+  } else {
+    var seed = val || 50;
+    for (var i = 0; i < 12; i++) {
+      var noise = (Math.sin(seed*i*0.7+i)*0.5+0.5);
+      var last  = i===11;
+      var h = Math.max(12, Math.min(95, 30 + noise*55 + (last?15:0)));
+      var op = 0.2 + (i/11)*0.8;
+      bars += '<div class="sb" style="height:'+h.toFixed(0)+'%;background:'+col+';opacity:'+op+(last?';outline:1px solid '+col:'')+'"></div>';
+    }
   }
   return bars;
 }
@@ -616,7 +644,7 @@ function renderCards(results) {
         +'<div><div class="c-name"><span class="c-icon">'+m.icon+'</span>'+m.name+'</div><div class="c-sub">'+m.sub+'</div></div>'
         +'<div class="sig-badge '+sig+'">'+sigLabel+'</div>'
       +'</div>'
-      +'<div class="spark">'+sparkline(sig, r.val, m.dec)+'</div>'
+      +'<div class="spark">'+sparkline(sig, r.val, m.dec, r.sparkVals)+'</div>'
       +'<div class="val-row">'
         +'<div class="c-val" style="color:'+valColor+'">'+dispVal+'</div>'
         +'<div class="c-unit">'+m.unit+'</div>'
@@ -667,6 +695,59 @@ function renderTrend(score) {
   if(deltaChips) deltaChips.innerHTML=chips;
 }
 
+// ── SIGNAL DISTRIBUTION ──────────────────────────────────
+function renderDistribution(results) {
+  var el = document.getElementById('distRow');
+  if (!el) return;
+  var counts = {bull:0, neutral:0, warning:0, bear:0, error:0};
+  results.forEach(function(r){ if(counts[r.sig]!==undefined) counts[r.sig]++; });
+  var total = results.length;
+  function bar(n) { return '<div class="dist-bar" style="width:'+(n/total*60+4).toFixed(0)+'px"></div>'; }
+  el.innerHTML =
+    (counts.bull    ? '<div class="dist-chip bull">▲ '+counts.bull+' BULLISH'+bar(counts.bull)+'</div>' : '') +
+    (counts.neutral ? '<div class="dist-chip neutral">◆ '+counts.neutral+' NEUTRAL'+bar(counts.neutral)+'</div>' : '') +
+    (counts.warning ? '<div class="dist-chip warning">⚠ '+counts.warning+' WARNUNG'+bar(counts.warning)+'</div>' : '') +
+    (counts.bear    ? '<div class="dist-chip bear">▼ '+counts.bear+' BEARISH'+bar(counts.bear)+'</div>' : '') +
+    (counts.error   ? '<div class="dist-chip error">✕ '+counts.error+' FEHLER</div>' : '');
+}
+
+// ── SCORE COUNT-UP ────────────────────────────────────────
+function animateScore(target) {
+  var el = document.getElementById('scoreNum');
+  if (!el) return;
+  var start = parseInt(el.textContent) || 0;
+  if (isNaN(start)) start = 0;
+  var diff = target - start;
+  var steps = 28, i = 0;
+  var iv = setInterval(function() {
+    i++;
+    var ease = 1 - Math.pow(1 - i/steps, 3);
+    var val = Math.round(start + diff * ease);
+    el.textContent = val;
+    el.style.color = scoreColor(val);
+    if (i >= steps) { el.textContent = target; el.style.color = scoreColor(target); clearInterval(iv); }
+  }, 22);
+}
+
+// ── AUTO-REFRESH ──────────────────────────────────────────
+var _arTimer = null, _arSecs = 0;
+function startAutoRefresh() {
+  clearInterval(_arTimer);
+  _arSecs = 300;
+  _updateCountdown();
+  _arTimer = setInterval(function() {
+    _arSecs--;
+    if (_arSecs <= 0) { clearInterval(_arTimer); loadAll(); }
+    else _updateCountdown();
+  }, 1000);
+}
+function _updateCountdown() {
+  var el = document.getElementById('countdownEl');
+  if (!el) return;
+  var m = Math.floor(_arSecs/60), s = _arSecs%60;
+  el.textContent = 'Auto ↻ ' + m + ':' + (s<10?'0':'') + s;
+}
+
 // ── TOOLTIP ──────────────────────────────────────────────
 function showTip(e,el){
   var t=document.getElementById('tip');
@@ -687,7 +768,7 @@ function renderAll(results, regimeData, ts) {
   var rl    = regimeLabel(score);
   var hasErr= results.some(function(r){return r.sig==='error';});
 
-  var sn=document.getElementById('scoreNum'); if(sn){sn.textContent=score;sn.style.color=scoreColor(score);}
+  animateScore(score);
   var mb=document.getElementById('meterBar'); if(mb) mb.style.width=score+'%';
 
   var pill=document.getElementById('regimePill');
@@ -714,6 +795,7 @@ function renderAll(results, regimeData, ts) {
   pushScoreHist(score, ts);
   renderTrend(score);
   renderStrip(results);
+  renderDistribution(results);
   renderCards(results);
 }
 
@@ -733,6 +815,7 @@ function loadAll() {
   function onSuccess(results) {
     renderAll(results, null, ts);
     spin.classList.remove('spinning');
+    startAutoRefresh();
   }
   function onError(err) {
     console.error('FRED Fehler:', err);
